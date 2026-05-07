@@ -1,174 +1,322 @@
 <!-- @format -->
 
 <!doctype html>
-<html lang="id" data-theme="light">
+<html lang="en">
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>AI Chat</title>
-
+		<title>Nexus AI — Chat</title>
 		<!-- Tailwind CSS -->
 		<script src="https://cdn.tailwindcss.com"></script>
-		<script>
-			tailwind.config = {
-				theme: {
-					extend: {
-						fontFamily: {
-							sora: ["Sora", "sans-serif"],
-						},
-					},
-				},
-			};
-		</script>
-
 		<!-- GSAP -->
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-
-		<!-- Font Awesome -->
-		<link
-			rel="stylesheet"
-			href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-
-		<!-- Google Fonts: Sora -->
+		<!-- Lucide Icons -->
+		<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+		<!-- Google Fonts -->
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 		<link
-			href="https://fonts.googleapis.com/css2?family=Sora:wght@200;300;400;500;600;700;800&display=swap"
+			href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap"
 			rel="stylesheet" />
-
 		<!-- Custom Styles -->
 		<link rel="stylesheet" href="style.css" />
 	</head>
+	<body data-theme="dark">
+		<!-- Mobile Overlay -->
+		<div id="mobileOverlay" class="mobile-overlay" aria-hidden="true"></div>
 
-	<body class="font-sora">
-		<div id="app">
-			<!-- Mobile sidebar toggle button -->
-			<button id="sidebar-toggle" aria-label="Buka sidebar">
-				<i class="fas fa-bars"></i>
+		<!-- Sidebar -->
+		<aside
+			id="sidebar"
+			class="sidebar"
+			role="navigation"
+			aria-label="Main navigation">
+			<!-- Sidebar Header -->
+			<div class="sidebar-header">
+				<div class="flex items-center gap-2.5">
+					<div class="logo-icon">
+						<i data-lucide="zap" class="w-5 h-5"></i>
+					</div>
+					<span class="logo-text">Nexus AI</span>
+				</div>
+				<button
+					id="sidebarCloseBtn"
+					class="sidebar-toggle-btn"
+					aria-label="Close sidebar">
+					<i data-lucide="panel-left-close" class="w-4 h-4"></i>
+				</button>
+			</div>
+
+			<!-- Navigation Tabs -->
+			<div class="nav-tabs">
+				<div id="tabIndicator" class="tab-indicator"></div>
+				<button class="nav-tab active" data-tab="chat" aria-selected="true">
+					<i data-lucide="message-square" class="w-4 h-4"></i>
+					<span>Chat</span>
+				</button>
+				<button class="nav-tab" data-tab="agent" aria-selected="false">
+					<i data-lucide="bot" class="w-4 h-4"></i>
+					<span>Agent</span>
+				</button>
+			</div>
+
+			<!-- Model Selector -->
+			<div class="model-selector" id="modelSelector">
+				<button
+					class="model-trigger"
+					id="modelTrigger"
+					aria-haspopup="listbox"
+					aria-expanded="false">
+					<i data-lucide="cpu" class="w-3.5 h-3.5 model-icon"></i>
+					<span id="modelLabel">Claude Sonnet 4.6</span>
+					<i data-lucide="chevron-down" class="w-3.5 h-3.5 chevron"></i>
+				</button>
+				<div
+					class="model-dropdown"
+					id="modelDropdown"
+					role="listbox"
+					aria-label="Select model">
+					<div
+						class="model-option selected"
+						data-model="Claude Sonnet 4.6"
+						role="option">
+						<span class="model-option-name">Claude Sonnet 4.6</span>
+						<span class="model-option-tag">Recommended</span>
+					</div>
+					<div class="model-option" data-model="Claude Opus 4" role="option">
+						<span class="model-option-name">Claude Opus 4</span>
+						<span class="model-option-tag premium">Premium</span>
+					</div>
+					<div class="model-option" data-model="GPT-4o" role="option">
+						<span class="model-option-name">GPT-4o</span>
+					</div>
+					<div class="model-option" data-model="GLM-5-Turbo" role="option">
+						<span class="model-option-name">GLM-5-Turbo</span>
+					</div>
+					<div class="model-option" data-model="Llama 3.1 405B" role="option">
+						<span class="model-option-name">Llama 3.1 405B</span>
+					</div>
+				</div>
+			</div>
+
+			<!-- New Chat Button -->
+			<button class="new-chat-btn" id="newChatBtn">
+				<i data-lucide="plus" class="w-4 h-4"></i>
+				<span>New Chat</span>
 			</button>
 
-			<!-- Main Chat Panel -->
-			<main id="chat-panel">
-				<!-- Greeting container — visible when no messages -->
-				<div id="greeting-container">
-					<section id="greeting-section" aria-label="Sapaan">
-						<p class="greeting-subtitle">AI Assistant</p>
-						<h1 class="greeting-headline">Apa yang bisa saya bantu?</h1>
-					</section>
-
-					<section id="suggestions-grid" aria-label="Saran topik">
-						<article
-							class="suggestion-card"
-							data-text="Jelaskan konsep machine learning dan bagaimana cara kerjanya">
-							<div
-								class="card-icon"
-								style="--icon-bg: rgba(5, 150, 105, 0.12); --icon-color: #059669">
-								<i class="fas fa-brain"></i>
-							</div>
-							<h3>Machine Learning</h3>
-							<p>Jelaskan konsep machine learning dan cara kerjanya</p>
-						</article>
-
-						<article
-							class="suggestion-card"
-							data-text="Bantu saya menulis kode JavaScript untuk aplikasi web">
-							<div
-								class="card-icon"
-								style="--icon-bg: rgba(217, 119, 6, 0.12); --icon-color: #d97706">
-								<i class="fas fa-code"></i>
-							</div>
-							<h3>Pemrograman</h3>
-							<p>Bantu saya menulis kode untuk aplikasi web</p>
-						</article>
-
-						<article
-							class="suggestion-card"
-							data-text="Bagaimana cara melakukan analisis data bisnis yang efektif?">
-							<div
-								class="card-icon"
-								style="--icon-bg: rgba(6, 182, 212, 0.12); --icon-color: #06b6d4">
-								<i class="fas fa-chart-bar"></i>
-							</div>
-							<h3>Analisis Data</h3>
-							<p>Cara melakukan analisis data bisnis yang efektif</p>
-						</article>
-
-						<article
-							class="suggestion-card"
-							data-text="Buatkan konten kreatif untuk media sosial saya">
-							<div
-								class="card-icon"
-								style="--icon-bg: rgba(225, 29, 72, 0.12); --icon-color: #e11d48">
-								<i class="fas fa-pen-fancy"></i>
-							</div>
-							<h3>Konten Kreatif</h3>
-							<p>Buatkan konten kreatif untuk media sosial</p>
-						</article>
-					</section>
+			<!-- Chat History -->
+			<div class="chat-history">
+				<div class="history-group">
+					<div class="history-group-label">Today</div>
+					<div class="history-item active">
+						<i data-lucide="message-square" class="w-3.5 h-3.5"></i>
+						<span>React performance optimization</span>
+					</div>
+					<div class="history-item">
+						<i data-lucide="message-square" class="w-3.5 h-3.5"></i>
+						<span>Python data pipeline design</span>
+					</div>
+					<div class="history-item">
+						<i data-lucide="message-square" class="w-3.5 h-3.5"></i>
+						<span>Database schema review</span>
+					</div>
 				</div>
+				<div class="history-group">
+					<div class="history-group-label">Yesterday</div>
+					<div class="history-item">
+						<i data-lucide="message-square" class="w-3.5 h-3.5"></i>
+						<span>API rate limiting strategies</span>
+					</div>
+					<div class="history-item">
+						<i data-lucide="message-square" class="w-3.5 h-3.5"></i>
+						<span>ML model comparison</span>
+					</div>
+				</div>
+				<div class="history-group">
+					<div class="history-group-label">Previous 7 Days</div>
+					<div class="history-item">
+						<i data-lucide="message-square" class="w-3.5 h-3.5"></i>
+						<span>Kubernetes deployment guide</span>
+					</div>
+					<div class="history-item">
+						<i data-lucide="message-square" class="w-3.5 h-3.5"></i>
+						<span>TypeScript generics deep dive</span>
+					</div>
+					<div class="history-item">
+						<i data-lucide="message-square" class="w-3.5 h-3.5"></i>
+						<span>System design: URL shortener</span>
+					</div>
+					<div class="history-item">
+						<i data-lucide="message-square" class="w-3.5 h-3.5"></i>
+						<span>CSS Grid vs Flexbox</span>
+					</div>
+				</div>
+			</div>
 
-				<!-- Chat messages area — hidden until first message -->
-				<div id="chat-messages" role="log" aria-live="polite"></div>
+			<!-- Sidebar Footer -->
+			<div class="sidebar-footer">
+				<button
+					class="footer-btn"
+					id="themeToggleSidebar"
+					aria-label="Toggle theme">
+					<i data-lucide="moon" class="w-4 h-4 theme-icon-moon"></i>
+					<i data-lucide="sun" class="w-4 h-4 theme-icon-sun"></i>
+					<span class="footer-btn-label">Theme</span>
+				</button>
+				<button class="footer-btn" aria-label="Settings">
+					<i data-lucide="settings" class="w-4 h-4"></i>
+					<span class="footer-btn-label">Settings</span>
+				</button>
+				<div class="user-profile">
+					<div class="user-avatar">
+						<span>A</span>
+					</div>
+					<div class="user-info">
+						<span class="user-name">Alex Chen</span>
+						<span class="user-plan">Pro Plan</span>
+					</div>
+				</div>
+			</div>
+		</aside>
 
-				<!-- Input section — always at bottom -->
-				<section id="input-section">
-					<div id="input-wrapper">
-						<textarea
-							id="chat-input"
-							placeholder="Ketik pesan Anda..."
-							aria-label="Input pesan"></textarea>
-						<button id="send-btn" aria-label="Kirim pesan" disabled>
-							<span class="send-glow"></span>
-							<span class="send-content">
-								<i class="fas fa-arrow-up"></i>
-							</span>
+		<!-- Main Content -->
+		<main class="main-content">
+			<!-- Top Bar -->
+			<header class="topbar">
+				<div class="topbar-left">
+					<button
+						id="sidebarOpenBtn"
+						class="sidebar-open-btn"
+						aria-label="Open sidebar">
+						<i data-lucide="panel-left-open" class="w-5 h-5"></i>
+					</button>
+				</div>
+				<div class="topbar-right">
+					<button
+						class="topbar-icon-btn"
+						id="themeToggleTopbar"
+						aria-label="Toggle theme">
+						<i data-lucide="moon" class="w-4 h-4 theme-icon-moon"></i>
+						<i data-lucide="sun" class="w-4 h-4 theme-icon-sun"></i>
+					</button>
+					<div class="topbar-avatar" aria-label="User menu">
+						<span>A</span>
+					</div>
+				</div>
+			</header>
+
+			<!-- Greeting Section -->
+			<section class="greeting-section" aria-label="Greeting">
+				<h1 class="greeting-title">Hi, Alex</h1>
+				<p class="greeting-subtitle">How can I help you today?</p>
+			</section>
+
+			<!-- Input Section -->
+			<section class="input-section" aria-label="Message input">
+				<div class="floating-input" id="floatingInput">
+					<textarea
+						id="messageInput"
+						class="message-textarea"
+						placeholder="Type your message..."
+						rows="1"
+						aria-label="Message input"></textarea>
+					<div class="input-actions">
+						<button
+							class="action-icon-btn"
+							aria-label="Attach file"
+							title="Attach file">
+							<i data-lucide="plus" class="w-4 h-4"></i>
+						</button>
+						<button
+							class="action-icon-btn"
+							aria-label="Web search"
+							title="Web search">
+							<i data-lucide="globe" class="w-4 h-4"></i>
+						</button>
+						<button
+							class="action-icon-btn"
+							aria-label="Image canvas"
+							title="Image canvas">
+							<i data-lucide="layout-grid" class="w-4 h-4"></i>
 						</button>
 					</div>
-					<p id="disclaimer">
-						AI dapat menghasilkan informasi yang tidak akurat. Periksa kembali
-						informasi penting.
-					</p>
-				</section>
-			</main>
-
-			<!-- Sidebar -->
-			<aside id="sidebar" aria-label="Riwayat obrolan">
-				<div class="sidebar-header">
-					<h2>Riwayat Obrolan</h2>
-					<button id="close-sidebar" aria-label="Tutup sidebar">
-						<i class="fas fa-xmark"></i>
+					<button class="send-btn" id="sendBtn" aria-label="Send message">
+						<i data-lucide="arrow-up" class="w-4 h-4"></i>
 					</button>
 				</div>
+			</section>
 
-				<nav class="sidebar-actions" aria-label="Aksi sidebar">
-					<button class="action-btn" id="btn-new-chat">
-						<i class="fas fa-plus"></i>
-						<span>Obrolan Baru</span>
-					</button>
-					<button class="action-btn" id="btn-resend">
-						<i class="fas fa-rotate-right"></i>
-						<span>Kirim Ulang</span>
-					</button>
-					<button class="action-btn" id="btn-clear">
-						<i class="fas fa-trash-can"></i>
-						<span>Hapus Riwayat</span>
-					</button>
-					<button class="action-btn" id="btn-theme">
-						<i class="fas fa-moon" id="theme-icon"></i>
-						<span id="theme-text">Tema Gelap</span>
-					</button>
-				</nav>
-
-				<div class="chat-list" id="chat-list">
-					<!-- Rendered by JS -->
+			<!-- Category Cards -->
+			<section class="categories-section" aria-label="Quick categories">
+				<div class="categories-grid">
+					<div class="category-card" data-category="ml">
+						<div class="card-spotlight"></div>
+						<div class="card-shimmer"></div>
+						<div
+							class="card-icon"
+							style="--icon-color: #00d4aa; --icon-bg: rgba(0, 212, 170, 0.12)">
+							<i data-lucide="brain" class="w-5 h-5"></i>
+						</div>
+						<div class="card-content">
+							<h3 class="card-title">Machine Learning</h3>
+							<p class="card-desc">
+								Model training, evaluation & deployment strategies
+							</p>
+						</div>
+					</div>
+					<div class="category-card" data-category="prog">
+						<div class="card-spotlight"></div>
+						<div class="card-shimmer"></div>
+						<div
+							class="card-icon"
+							style="--icon-color: #6366f1; --icon-bg: rgba(99, 102, 241, 0.12)">
+							<i data-lucide="code-2" class="w-5 h-5"></i>
+						</div>
+						<div class="card-content">
+							<h3 class="card-title">Programming</h3>
+							<p class="card-desc">Debug, refactor & build across any language</p>
+						</div>
+					</div>
+					<div class="category-card" data-category="data">
+						<div class="card-spotlight"></div>
+						<div class="card-shimmer"></div>
+						<div
+							class="card-icon"
+							style="--icon-color: #f59e0b; --icon-bg: rgba(245, 158, 11, 0.12)">
+							<i data-lucide="bar-chart-3" class="w-5 h-5"></i>
+						</div>
+						<div class="card-content">
+							<h3 class="card-title">Data Analysis</h3>
+							<p class="card-desc">Insights, visualization & statistical modeling</p>
+						</div>
+					</div>
+					<div class="category-card" data-category="creative">
+						<div class="card-spotlight"></div>
+						<div class="card-shimmer"></div>
+						<div
+							class="card-icon"
+							style="--icon-color: #ec4899; --icon-bg: rgba(236, 72, 153, 0.12)">
+							<i data-lucide="sparkles" class="w-5 h-5"></i>
+						</div>
+						<div class="card-content">
+							<h3 class="card-title">Creative Content</h3>
+							<p class="card-desc">Writing, brainstorming & creative exploration</p>
+						</div>
+					</div>
 				</div>
-			</aside>
+			</section>
 
-			<!-- Mobile sidebar backdrop -->
-			<div id="sidebar-backdrop"></div>
-		</div>
+			<!-- Disclaimer -->
+			<footer class="disclaimer">
+				<i data-lucide="info" class="w-3 h-3"></i>
+				<span
+					>AI can generate inaccurate information. Please verify important
+					details.</span
+				>
+			</footer>
+		</main>
 
-		<!-- Main Script -->
 		<script src="main.js"></script>
 	</body>
 </html>
